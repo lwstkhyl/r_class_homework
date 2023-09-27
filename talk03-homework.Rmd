@@ -1,0 +1,635 @@
+---
+title: "talk03 练习与作业"
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: true
+    toc_depth: 2
+  word_document: default
+  html_document:
+    df_print: paged
+knit: (
+  function(inputFile, encoding) { 
+
+    pSubTitle <- 'talk03-homework'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(sub_title = pSubTitle),      
+      output_file = pSubTitle) })
+---
+
+## 练习和作业说明
+
+将相关代码填写入以 \`\`\`{r} \`\`\` 标志的代码框中，运行并看到正确的结果；
+
+完成后，用工具栏里的"Knit"按键生成PDF文档；
+
+**将生成的PDF**改为：**`姓名-学号-talk03作业.pdf`**，并提交到老师指定的平台/钉群。
+
+## talk03 内容回顾
+
+-   二维表：`data.frame`, `tibble`
+
+    -   声明
+
+    -   操作
+
+        -   增减行、列
+
+        -   合并
+
+    -   常用相关函数
+
+        -   `nrow`, `ncol`, `dim` , `str` , `head`, `tail`
+
+    -   `data.frame`和 `tibble` 的不同
+
+    -   高级技巧：
+
+        -   `with`, `within`
+
+-   IO
+
+    -   系统自带函数
+
+    -   `readr` 带的函数
+
+    -   不同格式的读取
+
+    -   从网络、压缩文件读取
+
+## 练习与作业：用户验证
+
+请运行以下命令，验证你的用户名。
+
+**如你当前用户名不能体现你的真实姓名，请改为拼音后再运行本作业！**
+
+```{r}
+Sys.info()[["user"]]
+Sys.getenv("HOME")
+```
+
+## 练习与作业1，`data.frame`
+
+注：以下内容来自 <https://www.r-exercises.com/>。
+
+-   **生成下面的 `data.frame` 的前三列，之后再增加 `Sex` 这列**
+
+![](images/table1.png){width="80%"}
+
+```{r}
+res <- data.frame(Age=c(25,31,23,52,76,49,26),
+          Height=c(177,163,190,179,163,183,164),
+          Weight=c(57,69,83,75,70,83,53),
+          row.names = c("Alex","Lilly","Mark","Oliver","Martha","Lucas","Caroline"))
+res
+## 再插入第四列
+res <- cbind(res,Sex=c('F','F','M','M','F','M','F'))
+## 显示最终结果
+res
+```
+
+------------------------------------------------------------------------
+
+-   **生成以下`data.frame`，确保`Working`这列的类型是 `character`，而不是 `factor`**
+
+![](images/table2.png){width="80%"}
+
+```{r}
+## 生成 data.frame
+res <- data.frame(Working=c('Yes','No','No','Yes','Yes','No','Yes'),row.names = c("Alex","Lilly","Mark","Oliver","Martha","Lucas","Caroline"))
+## 显示结果
+res
+## 显示 Working 列的性质
+str(res["Working"])
+```
+
+------------------------------------------------------------------------
+
+-   **检查系统自带变量 `state.center` 的内容，将其转化为 `data.frame`**
+
+```{r}
+state.center
+res <- data.frame(state.center)
+res
+```
+
+------------------------------------------------------------------------
+
+-   **生成一个 50行 \* 5列 的`matrix`，将其行名改为：row_i 格式，其中 i 为当前的行号，比如 row_1, row_2 等**
+
+```{r}
+## 代码写这里，并运行；
+res <- matrix(nrow = 50,ncol = 5)
+row_name <- c(1:50)
+for(i in 1:50)
+{
+  row_name[i] <- paste0("row_",as.character(i))
+}
+rownames(res) <- row_name
+res
+```
+
+------------------------------------------------------------------------
+
+-   **使用系统自带变量`VADeaths`，做如下练习：**
+
+-   检查`VADeaths`的类型，如果不是 `data.frame`，则转换之；
+
+-   添加新的一列，取名 `Total`，其值为每行的总合
+
+-   调整列的顺序，将 `Total` 变为第一列。
+
+```{r}
+VADeaths
+class(VADeaths)
+res <- data.frame(VADeaths)
+col_list=c("Rural.Male","Rural.Female","Urban.Male","Urban.Female")
+res$Total=rowSums(res[,col_list])
+res
+res <- res[,c(5,1:4)]
+res
+```
+
+------------------------------------------------------------------------
+
+-   **用系统自带的`swiss`数据做练习：**
+
+-   取子集，选取第1, 2, 3, 10, 11, 12 and 13行，第`Examination`, `Education` 和 `Infant.Mortality`列；
+
+-   将`Sarine`行 `Infant.Mortality` 列的值改为NA；
+
+-   增加一列，命名为 `Mean`，其值为当前行的平均值；
+
+```{r}
+col_list <- c("Examination","Education","Infant.Mortality")
+res=swiss[c(1:3,10:13),col_list]
+res["Sarine","Infant.Mortality"] <- NA
+res$Mean <- rowMeans(res[,col_list])
+res
+```
+
+------------------------------------------------------------------------
+
+-   **将下面三个变量合并生成一个`data.frame`**
+
+`Id <- LETTERS`
+
+`x <- seq(1,43,along.with=Id)`
+
+`y <- seq(-20,0,along.with=Id)`
+
+```{r}
+Id <- LETTERS
+x <- seq(1,43,along.with=Id)
+y <- seq(-20,0,along.with=Id)
+res <- data.frame(Id=Id,x=x,y=y)
+print(res,row.names = FALSE)
+```
+
+**问：** `seq`函数中的`along.with` 参数的意义是什么？请举例说明。
+
+答：
+
+```{r}
+#along.with=Id就是说seq生成数据序列的长度与Id序列长度相同
+seq(0,10,along.with=c(1,10,2))
+#c(1,10,2)长度为3，就是生成3个数（分别是两个端点和中点）
+```
+
+------------------------------------------------------------------------
+
+-   **提供代码，合并以下两个 `data.frame`**
+
+<!-- -->
+
+```         
+> df1 的内容 
+Id Age
+1 14
+2 12
+3 15
+4 10 
+
+>df2 的内容
+Id Sex Code
+1 F a
+2 M b
+3 M c
+4 F d
+```
+
+合并之后的结果：
+
+```         
+> M 
+Id Age Sex Code
+1 14 F a
+2 12 M b
+3 15 M c
+4 10 F d
+```
+
+```{r}
+df1 <- data.frame(Id=c(1,2,3,4),Age=c(14,12,15,10))
+print(df1,row.names = FALSE)
+df2 <- data.frame(Id=c(1,2,3,4),Sex=c('F','M','M','F'),Code=c('a','b','c','d'))
+print(df2,row.names = FALSE)
+res <- merge(df1,df2)#默认按照相同的列名合并
+print(res,row.names = FALSE)
+```
+
+------------------------------------------------------------------------
+
+-   **从上面的`data.frame`中删除`code`列**
+
+```{r}
+res <- within(res,{
+  rm(Code)
+})
+print(res,row.names = FALSE)
+```
+
+------------------------------------------------------------------------
+
+-   **练习，回答代码中的问题**
+
+<!-- -->
+
+```         
+## 1. 生成一个10 行2 列的data.frame
+df3 <- data.frame( data = 1:10, group = c("A","B") );
+## 2. 增加一列，其长度是1，可以吗？
+cbind(df3, newcol = 1);
+## 3. 增加一列，其长度是10，可以吗？
+cbind(df3, newcol = 1:10);
+## 4. 增加一列，其长度是2，可以吗？
+cbind(df3, newcol = 1:2);
+## 5. 增加一列，其长度是3，可以吗？
+cbind(df3, newcol = 1:3);
+```
+
+答：`tibble`的 recycling 仅限于长度为1或等长，而 `data.frame` 则为整除即可。因此长度为1、10、2的增加列可以，而长度为3的不行（不被10整除）
+
+## 练习与作业2，`tibble`
+
+-   **运行以下代码，生成一个新的`tibble`：**
+
+```{r}
+## 如果系统中没有 lubridate 包，则安装：
+if (!require("lubridate")){ 
+  chooseCRANmirror();
+  install.packages("lubridate");
+} 
+library(lubridate);
+
+if (!require("tibble")){ 
+  chooseCRANmirror();
+  install.packages("tibble");
+}
+library(tibble);
+
+tibble(
+  a = lubridate::now() + runif(1e3) * 86400,
+  b = lubridate::today() + runif(1e3) * 30,
+  c = 1:1e3,
+  d = runif(1e3),
+  e = sample(letters, 1e3, replace = TRUE)
+)
+```
+
+从中可以看出，`tibble`支持一些细分数据类型，包括：
+
+-   `<dttm>`
+-   `<date>`
+
+等；
+
+------------------------------------------------------------------------
+
+-   **生成一个如下的`tibble`，完成以下任务：**
+
+<!-- -->
+
+```         
+df <- tibble(
+  x = runif(5),
+  y = rnorm(5)
+)
+```
+
+任务：
+
+-   取一列，比如`x`这一列，得到一个 `tibble`；
+-   取一列，比如`y`这一列，得到一个 `vector`；
+
+```{r}
+df <- tibble(
+  x = runif(5),
+  y = rnorm(5)
+)
+row_x <- df[,"x"]
+class(row_x)
+row_x
+row_y <- df[["y"]]
+class(row_y)
+row_y
+```
+
+------------------------------------------------------------------------
+
+-   **用 `tibble` 函数创建一个新的空表，并逐行增加一些随机的数据，共增加三行：**
+
+```{r}
+tb <- tibble( name = character(), age = integer(), salary = double() );
+##增加三行随机数据；
+name_add <- sample(letters,3)
+age_add <- sample(20:30,3)
+salary_add <- sample(1:10,3)
+tb <- add_row(tb,name=name_add,age=age_add,salary=salary_add)
+tb
+```
+
+------------------------------------------------------------------------
+
+-   \*\* 请解释为什么下面第一行代码能够运行成功，但第二个不行？ \*\*
+
+这个可以：
+
+`data.frame(a = 1:6, b = LETTERS[1:2]);`
+
+但下面这个不行：
+
+`tibble(a = 1:6, b = LETTERS[1:2]);`
+
+问：为什么？tibble 循环的规则是什么？
+
+答：`tibble`的 recycling 仅限于长度为1或等长，而 `data.frame` 则为整除即可。此题中a有6行，而b只有2行，2是6的倍数，所以data.frame可以，但2不等于6，所以tibble不行
+
+------------------------------------------------------------------------
+
+-   **`attach`和`detach`：**
+
+问：这个两个函数的用途是什么？请用 `iris` 这个系统自带变量举例说明。
+
+答：加上attach后就可以直接用列名获取数据，不用写[[]]。如获取iris中名为Sepal.Length的列，正常情况是用iris\$Sepal.Length；但加上attach(iris)后，Sepal.Length就表示该列。detach(iris)就是取消attach(iris)的操作
+
+------------------------------------------------------------------------
+
+-   **使用内置变量`airquality`：**
+
+-   检查它是否是 `tibble`；
+
+-   如果不是，转化为 `tibble`；
+
+```{r}
+airquality
+is_tibble(airquality)
+class(airquality)
+res <- as_tibble(airquality)
+res
+class(res)
+```
+
+------------------------------------------------------------------------
+
+-   **问：`tibble::enframe`函数的用途是什么？请举例说明：**
+
+答：将vector或list转换为一列或两列的tibble。如enframe(c(1,2,3))，结果是两列的tibble，列名分别为name和value，列值都是(1,2,3)
+
+------------------------------------------------------------------------
+
+-   **简述`tibble`相比`data.frame`的优势？并用实例展示**
+
+答：（1）tibble可以按顺序计算列值（将前一列的值用于创建下一列的值）
+
+（2）tibble取一行/一列时返回的仍是一个tibble，而data.frame取一列时返回的是一个vector
+
+（3）tibble可以进行可控的数据类型转换（使用[[]]或\$时返回一个vector）
+
+（4）tibble在根据列名取某列时不会部分匹配，更准确
+
+```{r}
+#1
+t <- tibble(x = 1:5, y = x ^ 2)#第一列是1-5，第二列是1-5（第一列）的平方
+#d <- data.frame(x = 1:5, y = x ^ 2)报错
+#2
+d <- data.frame(x = 1:3, y = 3:1)
+class(d[, 1])#是一个vector
+class(t[, 1])#是一个tibble
+#3
+class(t[[1]])
+class(t$x)#都是一个vector
+#4
+df <- data.frame(abc = 1)
+df$ab#不会报错
+t <- tibble(abc = 1)
+#t$ab会报错
+```
+
+## 练习与作业3：IO
+
+-   **提供代码，正确读取以下文件：**
+
+注：数据在当前目录下的 `data/` 子目录里
+
+-   Table0.txt
+-   Table1.txt
+-   Table2.txt
+-   Table3.txt
+-   Table4.txt
+-   Table5.txt
+-   Table6.txt
+-   states1.csv
+-   states2.csv
+
+注2：每个文件读取需要提供两种方法，一种是利用系统自带函数，另一种是`readr`包的函数；
+
+注3：请注意观察每列的数据特点，并将之读取为合理的数据类型；比如 体重 `1,77` 可理解为 `1.77` 米，并将之读取为 `col_double()` 类型；
+
+```{r}
+## 用系统自带函数，并显示读取的内容；
+#1
+res_0 <- read.table("data\\Table0.txt")
+res_0
+
+#2
+res_1 <- read.table("data\\Table1.txt",header = TRUE)#header = TRUE显示列名
+res_1
+
+#3
+res_2 <- read.table("data\\Table2.txt",header = TRUE,skip = 2,quote = "/")#skip跳过前2行读取，quote消除string数据前后的字符
+res_2
+
+#4
+res_3 <- read.table("data\\Table3.txt",header = TRUE,skip = 2,na.strings = NA)#na.strings = NA让空缺数据显示为NA
+for(i in 1:5)
+{
+  for(j in 1:7)
+  {
+    res_3[j,i] <- gsub('[*]',NA,res_3[j,i])
+    res_3[j,i] <- gsub('[-]',NA,res_3[j,i])
+  }#将**和--替换为NA
+}
+res_3
+
+#5
+res_4 <- read.table("data\\Table4.txt",header = TRUE)
+for(i in 1:5)
+{
+  for(j in 1:7)
+  {
+    res_4[j,i] <- gsub('[*]',NA,res_4[j,i])
+    res_4[j,i] <- gsub('[-]',NA,res_4[j,i])
+    res_4[j,i] <- gsub('[,]','.',res_4[j,i])
+  }
+}
+res_4$Age <- as.integer(res_4$Age)#改变列数据类型（chr->int）
+res_4$Height <- as.double(res_4$Height)
+res_4$Weight <- as.integer(res_4$Weight)
+res_4
+
+#6
+col_name <- c("Name","Age","Height","Weight","Sex")
+res_5 <- read.table("data\\Table6.txt",skip = 9,header = TRUE,col.names = col_name,nrows = 7)#col.names = col_name指定列名；nrows = 7 最多读取7行数据（不是第7行，是从开始读取往后7行）
+res_5
+
+#7
+res_6 <- read.table("data\\Table5.txt",sep=";",na.strings = NA,header = TRUE)#指定每个数据的分隔符为分号（让读取时按分号捕获数据）
+for(i in 1:5)
+{
+  for(j in 1:7)
+  {
+    res_6[j,i] <- gsub('[*]',NA,res_6[j,i])
+    res_6[j,i] <- gsub('[-]',NA,res_6[j,i])
+    res_6[j,i] <- gsub('[,]','.',res_6[j,i])
+  }
+}
+res_6$Age <- as.integer(res_6$Age)
+res_6$Height <- as.double(res_6$Height)
+res_6$Weight <- as.integer(res_6$Weight)
+res_6
+
+#8
+res_8=read.csv("data\\states1.csv")
+res_8
+
+#9
+res_9=read.csv("data\\states2.csv",sep = ";")
+for(i in 1:50)
+{
+  for(j in 1:9)
+  {
+    res_9[i,j] <- gsub('[,]','.',res_9[i,j])
+  }
+}
+res_9$Population <- as.integer(res_9$Population)
+res_9$Income <- as.integer(res_9$Income)
+res_9$Illiteracy <- as.double(res_9$Illiteracy)
+res_9$Life.Exp <- as.double(res_9$Life.Exp)
+res_9$Murder <- as.double(res_9$Murder)
+res_9$HS.Grad <- as.double(res_9$HS.Grad)
+res_9$Frost <- as.integer(res_9$Frost)
+res_9$Area <- as.integer(res_9$Area)
+res_9
+
+## 用readr 包的函数读取，并显示读取的内容；
+library("readr")
+#1
+res_0 <- read_table("data\\Table0.txt",col_names = FALSE)
+res_0
+
+#2
+res_1 <- read_table("data\\Table1.txt")
+res_1
+
+#3
+res_2 <- read_table("data\\Table2.txt",skip = 2)
+for(i in 1:7)
+{
+  for(j in c(1,5))
+  {
+    res_2[i,j] <- gsub('/','',as.character(res_2[i,j]))
+  }
+}
+res_2
+
+#4
+col_name <- c("Name","Age","Height","Weight","Sex")
+res_3 <- read_table("data\\Table3.txt",skip = 3,col_names = col_name)
+for(i in 1:7)
+{
+  for(j in 1:5)
+  {
+    res_3[i,j] <- gsub('[*]',NA,as.character(res_3[i,j]))
+    res_3[i,j] <- gsub('[-]',NA,as.character(res_3[i,j]))
+  }
+}
+res_3$Age <- as.integer(res_3$Age)
+res_3$Height <- as.integer(res_3$Height)
+res_3$Weight <- as.integer(res_3$Weight)
+res_3
+
+#5
+res_4 <- read_table("data\\Table4.txt")
+for(i in 1:5)
+{
+  for(j in 1:7)
+  {
+    res_4[j,i] <- gsub('[*]',NA,as.character(res_4[j,i]))
+    res_4[j,i] <- gsub('[-]',NA,as.character(res_4[j,i]))
+    res_4[j,i] <- gsub('[,]','.',as.character(res_4[j,i]))
+  }
+}
+res_4$Age <- as.integer(res_4$Age)
+res_4$Height <- as.double(res_4$Height)
+res_4$Weight <- as.integer(res_4$Weight)
+res_4
+
+#6
+col_name <- c("Name","Age","Height","Weight","Sex")
+res_5 <- read_table("data\\Table6.txt",skip = 10,col_names = col_name,n_max = 7)
+res_5
+
+#7
+res_6 <- read_table("data\\Table5.txt",col_names = FALSE)
+for(k in 1:8)
+{
+  res_6[k,1] <- gsub(';;','      NA      ',as.character(res_6[k,1]))
+  res_6[k,1] <- gsub(';','      ',as.character(res_6[k,1]))
+}
+write_csv(res_6,"tmp_1",col_names=FALSE)#col_names=FALSE使输出的文本不显示列名
+res_6 <- read_table("tmp_1")
+res_6$Height <- as.character(res_6$Height)
+for(i in 1:5)
+{
+  for(j in 1:7)
+  {
+    res_6[j,i] <- gsub('[*]',NA,as.character(res_6[j,i]))
+    res_6[j,i] <- gsub('[-]',NA,as.character(res_6[j,i]))
+    res_6[j,i] <- gsub('["]','',as.character(res_6[j,i]))
+  }
+}
+res_6$Age <- as.integer(res_6$Age)
+res_6$Height <- as.integer(res_6$Height)
+res_6$Weight <- as.integer(res_6$Weight)
+res_6
+
+#8
+res_8=read_csv("data\\states1.csv")
+res_8
+
+#9
+col_list <- c("","Population","Income","Illiteracy","Life Exp","Murder","HS Grad","Frost","Area")
+text <- read_lines("data\\states2.csv")
+text <- gsub('[,]','.',text)
+text <- gsub('[;]',',',text)
+text <- gsub('["]','',text)
+write.csv(text,"tmp_2",row.names = FALSE, quote = FALSE)#quote = FALSE使输出的文本string两边没有引号
+res <- read.csv("tmp_2",skip = 1,col.names = col_list)
+res
+```
