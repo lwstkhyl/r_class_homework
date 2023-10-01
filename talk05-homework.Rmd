@@ -1,0 +1,329 @@
+---
+title: "talk05 练习与作业"
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: true
+    toc_depth: 2
+  word_document: default
+  html_document:
+    df_print: paged
+knit: (
+  function(inputFile, encoding) { 
+
+    pSubTitle <- 'talk05-homework'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(sub_title = pSubTitle),      
+      output_file = pSubTitle) })
+---
+
+## 练习和作业说明
+
+将相关代码填写入以 \`\`\`{r} \`\`\` 标志的代码框中，运行并看到正确的结果；
+
+完成后，用工具栏里的"Knit"按键生成PDF文档；
+
+**将PDF文档**改为：**`姓名-学号-talk05作业.pdf`**，并提交到老师指定的平台/钉群。
+
+## Talk05 内容回顾
+
+-   dplyr 、 tidyr (超级强大的数据处理) part 1
+    -   pipe
+    -   dplyr 几个重要函数
+
+## 练习与作业：用户验证
+
+请运行以下命令，验证你的用户名。
+
+**如你当前用户名不能体现你的真实姓名，请改为拼音后再运行本作业！**
+
+```{r}
+Sys.info()[["user"]]
+Sys.getenv("HOME")
+getwd(); ## 显示当前工作目录
+```
+
+## 练习与作业1：dplyr练习
+
+------------------------------------------------------------------------
+
+### **使用 mouse.tibble 变量做统计**
+
+-   每个染色体（或scaffold）上每种基因类型的数量、平均长度、最大和最小长度，挑出最长和最短的基因
+-   去掉含有500以下基因的染色体（或scaffold），按染色体（或scaffold）、数量 高 -\> 低 进行排序
+
+**挑战题（可选做）：**
+
+实现上述目标（即：去掉少于500基因的染色体、排序、并统计）时不使用中间变量；
+
+```{r}
+library("tidyverse")
+mouse.tibble <- read_delim( file = "../data/talk04/mouse_genes_biomart_sep2018.txt",
+                            delim = "\t", quote = "" )
+#1
+res1 <- mouse.tibble %>%
+  select( CHR = `Chromosome/scaffold name`,
+          TYPE = `Transcript type`,
+          GENE_ID = `Gene stable ID`,
+          GENE_LEN =  `Transcript length (including UTRs and CDS)`  ) %>%#改变列名
+  arrange( -GENE_LEN ) %>%#按照基因长度排序（从大到小）
+  group_by( CHR, TYPE ) %>%#按照chr和type分组
+  summarise(count=n_distinct(GENE_ID),
+            mean_len=mean(GENE_LEN),
+            max_len=first(GENE_LEN),
+            min_len=last(GENE_LEN),
+            max_GENE=first(GENE_ID),
+            min_GENE=last(GENE_ID))
+#添加列，之前按基因长度排完序后，
+#每组的gene_len的第一个元素就是最大值，
+#gene_id的第一个元素就是最大值对应的id。
+#若没排序就用min max排最大最小值
+res1
+#2
+res2 <- mouse.tibble %>%
+  select( CHR = `Chromosome/scaffold name`, 
+          TYPE = `Transcript type`, 
+          GENE_ID = `Gene stable ID`, 
+          GENE_LEN =  `Transcript length (including UTRs and CDS)`  ) %>%
+  group_by(CHR)%>%
+  summarise(count=n_distinct(GENE_ID)) %>%
+  filter(count>500) %>%#选择count>500的行
+  arrange(-count)#按count从大到小排序
+res2
+```
+
+------------------------------------------------------------------------
+
+### **使用 grades2 变量做练习**
+
+首先，用下面命令生成 `grades2`变量：
+
+```{r}
+grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
+                             "Warren Buffet", "Elon Musk", "Jack Ma"),
+                  "Occupation" = c("Teacher", "Student", "Teacher", "Student", 
+                                   rep( "Entrepreneur", 3 ) ),
+                  "English" = sample( 60:100, 7 ),
+                  "ComputerScience" = sample(80:90, 7),
+                  "Biology" = sample( 50:100, 7),
+                  "Bioinformatics" = sample( 40:90, 7)
+                  );
+```
+
+然后统计： 1. 每个人最差的学科和成绩分别是什么？ 2. 哪个职业的平均成绩最好？ 3. 每个职业的最佳学科分别是什么（按平均分排序）？？？
+
+```{r}
+#1-每个人的最差学科和成绩
+res1 <- grades2 %>%
+  gather( course, grade, -Name, -Occupation, na.rm = T ) %>%
+  #除了name和occupation列，都删去，转成course和grade列
+  #其中第一个参数即course做键（接收原列的列名）
+  #第二个参数即grade做值（接收原列的列值）
+  group_by(Name) %>%
+  #按姓名分组
+  arrange(-grade) %>%
+  #按成绩由高到低排序
+  summarise(worst_grade=last(grade),
+            worst_course=last(course))
+res1
+#2-平均成绩最好的职业
+res2 <- grades2 %>%
+  gather( course, grade, -Name, -Occupation, na.rm = T ) %>%
+  group_by(Occupation) %>%
+  #按职业分组--使结果有3行，每行代表一种职业
+  summarise(avg_grade=mean(grade)) %>%
+  #取平均值
+  arrange(-avg_grade)
+res2
+print(paste0("平均成绩最好的职业:",res2[1,1]))
+#3
+res3 <- grades2 %>%
+  gather( course, grade, -Name, -Occupation, na.rm = T ) %>%
+  group_by(Occupation,course) %>%
+  #同时要知道职业和学科，所以按occupation和course分组
+  summarise(avg_grade=mean(grade)) %>%
+  #先得到每个职业的每个学科的平均值，共3*4行
+  arrange(-avg_grade) %>%
+  #对平均值排序
+  summarise(best_course=first(course))
+  #取每个职业的course列的第一个元素（最好的学科）为best_course列
+res3
+```
+
+------------------------------------------------------------------------
+
+### **使用 `starwars` 变量做计算**
+
+1.  计算每个人的 BMI；
+2.  挑选出 肥胖（BMI \>= 30）的人类，并且只显示其 `name`, `sex` 和 `homeworld`；
+
+```{r}
+res1 <- starwars %>% 
+  select(name,height,mass,sex,homeworld,species) %>%
+  mutate( bmi = mass / ( (height / 100 ) ^ 2 ) ) %>%
+  filter(bmi>=30&species=="Human") %>%
+  select(name,sex,homeworld)
+res1
+```
+
+3.  挑选出所有人类；
+4.  按BMI将他们分为三组， \<18, 18\~25, \>25，统计每组的人数，并用 barplot 进行展示；注意：展示时三组的按BMI从小到大排序；
+5.  改变排序方式，按每组人数从小到大排序；
+
+```{r,warning=FALSE}
+data <- starwars %>%
+  select(name,height,mass,species) %>%
+  mutate( bmi = mass / ( (height / 100 ) ^ 2 ) ) %>%
+  filter(species=="Human") %>%
+  select(bmi) 
+data <- as.data.frame(data)
+#dataframe的[i,1]是一个值(vector)，而tibble的是一个tibble
+for(i in 1:nrow(data))#nrow获取行数，ncol获取列数
+{
+  if(is.na(data[i,1]))
+  {
+    data[i,1] <- 0
+  }#NA值不能与数字类型进行比较，必须把NA转成一个值
+  #也可以直接在select(bmi)的时候加上filter(bmi!=NA)
+  if(data[i,1]<18&&data[i,1]>0)
+  {
+    data[i,1] <- "bmi<18"
+  }
+  else if(data[i,1]>=18&&data[i,1]<=25)
+  {
+    data[i,1] <- "18<=bmi<=25"
+  }
+  else if(data[i,1]>25)
+  {
+    data[i,1] <- "bmi>25"
+  }#必须加else，要不"bmi<18">25会判断为true
+}
+data <- as.tibble(data) %>%
+  count(bmi,sort = T) %>%#统计每组人数
+  rows_delete(tibble(bmi="0"))#删除bmi为0(NA)的行
+data_vec_bmi <- as.integer(c(data[3,2],data[1,2],data[2,2]))
+#转成数字，因为barplot必须接收数字型vector
+#或者在data[i,1] <- "bmi<18"时改成 <- 18，
+#这样就可以直接按照bmi列大小排序
+data_n <- data %>%
+  arrange(n)
+data_vec_n <- as.integer(c(data_n[1,2],data_n[2,2],data_n[3,2]))
+res_bmi <- barplot(height = data_vec_bmi,
+               names.arg = c("<18","18-25",">25"),
+               xlab = "bmi",
+               ylab = "num",
+               main = "BMI")
+res_n <- barplot(height = data_vec_n,
+               names.arg = c("<18",">25","18-25"),
+               xlab = "bmi",
+               ylab = "num",
+               main = "num")
+```
+
+6.  查看 `starwars` 的 `films` 列，它有什么特点？`data.frame`可以实现类似的功能吗？
+
+答：
+
+```{r}
+data <- starwars %>%
+  select(films) %>%
+  head()
+data
+#点击右上角环境变量中的data，发现films列的元素是一个list，
+#该list里面的元素是一个chr型的vector，
+#该vector里面的元素是电影名，描述角色在哪些部电影中出现
+#而data在rmd中输出的是<chr [5]>的形式，
+#[5]表示该chr型vector中有5个元素，即在5部电影中出现
+data_df <- as.data.frame(data)
+data_df #在rstudio中此句输出结果与上面tibble的相同
+#但生成的PDF中输出是里面包含的电影名称，因此data.frame不能实现
+```
+
+7.  为`starwars`增加一列，用于统计每个角色在多少部电影中出现。
+
+```{r}
+data <- starwars %>%
+  select(name,films) %>%
+  mutate(film_num=c(1))#增加film_num列
+for(i in 1:nrow(data))
+{
+  data[i,3] <- length(data[[i,2]][[1]])
+  #data[[i,2]]是取data第i行第2列的元素（一个list），
+  #若是[i,2]会返回一个tibble
+  #list[[1]]是取该list的第一个元素，即包含电影名字的vector，
+  #若是[1]会返回一个list
+  #length(vector)返回该vector的元素数量（电影数量）
+}
+res <- data %>%
+  select(name,film_num)
+res
+```
+
+### **使用`Theoph`变量做练习**
+
+注：以下练习请只显示结果的前6行；
+
+1.  选取从 `Subject` 到 `Dose` 的列；总共有几列？
+
+```{r}
+res1 <- Theoph %>%
+  select(Subject:Dose)
+head(res1)
+print(paste0("总共有",ncol(res1),"列"))
+```
+
+2.  用`filter` 选取 `Dose` 大于5，且 `Time` 高于 `Time` 列平均值的行；
+
+```{r}
+res2 <- Theoph %>%
+  filter(Dose>5&Time>mean(Time)) %>%
+  select(Subject:Time)
+head(res2)
+```
+
+3.  用 `mutate` 函数产生新列 `trend`，其值为 `Time` 与 `Time`列平均值的差；注意：请去除可能产生的 `na` 值；
+
+```{r}
+res3 <- Theoph %>%
+  mutate(trend=Time-mean(Time)) %>%
+  select(Time,trend)
+head(res3)
+```
+
+4.  用 `mutate` 函数产生新列 `weight_cat` ，其值根据 `Wt`的取值范围而不同：
+
+-   如果`Wt` \> 76.2，为 'Super-middleweight'，否则
+-   如果 `Wt` \> 72.57，为 'Middleweight'，否则
+-   如果 `Wt` \> 66.68，为 'Light-middleweight'
+-   其它值，为 'Welterweight'
+
+```{r}
+res4 <- Theoph %>%
+  select(Wt) %>%
+  mutate(weight_cat=c("1"))
+for(i in 1:nrow(res4)) 
+{
+  if(res4[[i,1]]>76.2)
+  {
+    res4[i,2] <- 'Super-middleweight'
+  }
+  else if(res4[[i,1]]>72.57)
+  {
+    res4[i,2] <- 'Middleweight'
+  }
+  else if(res4[[i,1]]>66.68)
+  {
+    res4[i,2] <- 'Light-middleweight'
+  }
+  else
+  {
+    res4[i,2] <- 'Welterweight'
+  }
+}
+head(res4)
+```
