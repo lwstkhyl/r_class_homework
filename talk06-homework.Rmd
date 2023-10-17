@@ -127,7 +127,7 @@ abu.dat <- abu %>%
   arrange(desc(relative_abundance)) %>%
   lump_rows(scientific_name,relative_abundance,n=5,other_level="Qita")
 abu.dat
-#3
+#3--以下大部分代码来自网络
 #添加角度
 A_pies4 <- cross_join(abu.dat,
  abu.dat %>%
@@ -147,8 +147,8 @@ ggplot(A_pies4) +
  start = start_angle, end = end_angle, fill = scientific_name))+
  geom_text(aes(x = rlabel*sin(mid_angle), 
                      y = rlabel*cos(mid_angle), 
-                     label = round(relative_abundance,1),
- hjust = hjust, vjust = vjust),nudge_x = 0,
+                     label = round(relative_abundance,1),  #round(relative_abundance,1)中的1是保留到小数点后的位数
+ hjust = hjust, vjust = vjust),nudge_x = 0,  #nudge_x是文字在离圆心多远处显示
  show.legend = FALSE) +
  coord_fixed() +
   scale_fill_manual(values = c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', 
@@ -180,12 +180,12 @@ haircolor_count <- starwars %>%
   group_by(hair_color) %>%
   summarise(count=length(hair_color))
 #统计个数用length（当用n_distinct不行时）
-haircolor_count[[13,1]] <- "NA"
+haircolor_count[[13,1]] <- "NA"  #把缺失值NA改成字符串“NA”，方便作图
 ggplot(haircolor_count, aes(x=fct_reorder(hair_color,count,.desc = F),
                      y=count)) +
   xlab("hair_color") +
   geom_bar(stat = "identity") + 
-#stat = "identity"当出现tat_count() can only have an x or y aesthetic.报错时加
+#当出现tat_count() can only have an x or y aesthetic.报错时加stat = "identity"
   coord_flip()
 ```
 
@@ -199,6 +199,7 @@ haircolor_count_filter <- haircolor_count %>%
 haircolor_count_others <- haircolor_count %>%
     arrange(desc(count)) %>% 
     lump_rows(hair_color,count,n=nrow(haircolor_count_filter),other_level="Others")
+#lump_rows函数中的n是把前n行保留，后面行相加合并，取之前选出来频率>0.05的hair_color的个数
 ggplot(haircolor_count_others, aes(x=fct_reorder(hair_color,count,.desc = F),
                      y=count)) +
   xlab("hair_color") +
@@ -253,7 +254,7 @@ netdata.nr <-
             if_else( gene1 > gene2, 
                      str_c( gene1, gene2, sep = "-" ), 
                      str_c( gene2, gene1, sep = "-" ) ) ) %>% 
-  group_by( group ) %>% slice( 1 )
+  group_by( group ) %>% slice( 1 ) #去除重复数据（课件内容）
 netnet.nr <- graph_from_data_frame( netdata.nr, directed = FALSE )
 plot(netnet.nr)
 ```
@@ -313,7 +314,7 @@ file5 <- read.table("data/talk06/relative_abundance_for_curated_sample_PRJEB6070
   mutate(sample_name="PRJEB6070-DE-077")
 res <- bind_rows(file1,file2,file3,file4,file5)#合并dataframe
 res <- as.tibble(res)#将dataframe转为tibble
-res_spread <- res %>%
+res_wider <- res %>%
   distinct(sample_name,scientific_name,.keep_all = T) %>%
 #去除sample_name和scientific_name都重复的行，即同一个样本中sci_name相同的重复行，
 #否则变宽时会有多个值对应一个位置，让该处的值为一个list
@@ -321,7 +322,7 @@ res_spread <- res %>%
 #将隐式缺失值转为显式
   pivot_wider(names_from = "sample_name",values_from = "relative_abundance")
 #sample_name为列名，relative_abundance为列值
-res_spread[is.na(res_spread)] <- 0
-#将所有的NA替换为0
-head(res_spread,n=10)
+res_wider[is.na(res_wider)] <- 0
+#将所有的NA替换为0,is.na函数返回tibble中所有NA的索引
+head(res_wider,n=10)
 ```
