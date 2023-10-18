@@ -1,0 +1,318 @@
+---
+title: "talk07 练习与作业"
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: true
+    toc_depth: 2
+  word_document: default
+  html_document:
+    df_print: paged
+knit: (
+  function(inputFile, encoding) { 
+
+    pSubTitle <- 'talk07-homework'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(sub_title = pSubTitle),      
+      output_file = pSubTitle) })
+---
+
+## 练习和作业说明
+
+将相关代码填写入以 \`\`\`{r} \`\`\` 标志的代码框中，运行并看到正确的结果；
+
+完成后，用工具栏里的"Knit"按键生成PDF文档；
+
+**将PDF文档**改为：**`姓名-学号-talk07作业.pdf`**，并提交到老师指定的平台/钉群。
+
+## talk07 内容回顾
+
+1.  string basics
+
+-   length
+-   uppercase, lowercase
+-   unite, separate
+-   string comparisons, sub string
+
+2.  regular expression
+
+-   detect patterns
+-   locate patterns
+-   extract patterns
+-   replace patterns
+
+## 练习与作业：用户验证
+
+请运行以下命令，验证你的用户名。
+
+**如你当前用户名不能体现你的真实姓名，请改为拼音后再运行本作业！**
+
+```{r}
+Sys.info()[["user"]]
+Sys.getenv("HOME")
+```
+
+## 练习与作业1：字符串操作
+
+------------------------------------------------------------------------
+
+### **用`stringr`包实现以下操作**
+
+使用变量： `x <- c('weihua', 'chen');`
+
+1.  每个element/成员的长度
+2.  每个成员首字母大写
+3.  取每个成员的前两个字符
+4.  合并为一个字符串，用 ',' 间隔
+5.  数一下每个成员中`元音字母` （vowel letter）的数量
+
+```{r}
+library(stringr)
+x <- c('weihua', 'chen')
+for(i in 1:length(x))
+{
+  print(paste0(x[i],"长度:",str_length(x[i])))#算长度
+  print(paste0(x[i],"中元音字母数量:",str_count(x[i],"[aeiou]")))
+  x[i] <- str_to_title(x[i])#将首字母大写
+}
+x1 <- substr(x[1],1,2)
+x2 <- substr(x[2],1,2)#取前两个字符，1和2为起始和结束位置
+res <- paste(x1,x2,sep = ",")#合并为字符串，用 ',' 间隔
+res
+```
+
+------------------------------------------------------------------------
+
+### **用`mtcars`变量作练习**
+
+1.  筛选出所有的奔驰车（Mercedes-Benz）；
+2.  筛选出所有非奔驰车；
+3.  处理行名，将其中的品牌与车型分开。比如：Mazda RX4 Wag =\> 'Mazda', 'RX4 Wag'
+
+```{r}
+car_name <- rownames(mtcars)#取出所有车的名称
+merc_cars <- c()
+no_merc_cars <- c()
+car_name_divide <- c()
+for(i in 1:length(car_name))
+{
+  if(str_detect(car_name[i],"Merc"))
+  {
+    merc_cars <- append(merc_cars,car_name[i])#向merc_cars中添加元素
+  }
+  else
+  {
+    no_merc_cars <- append(no_merc_cars,car_name[i])
+  }
+  car_name_divide <- append(car_name_divide,sub(" ",",",car_name[i]))
+}
+mtcars[merc_cars,]
+#如果只想要包含"Merc"的车名，
+#就直接str_subset(car_name,"Merc")获取merc_cars
+mtcars[no_merc_cars,]
+#若想分开就是car_name_divide <- sub(" ",",",car_name[2]) %>% 
+#  str_split(",")
+#sub只进行一次替换，gsub替换所有
+car_name_divide
+```
+
+**用`str_c`操作**
+
+为下面字符增加前缀和后缀，
+
+`x <- c("abc", NA)`
+
+使其最终结果为：
+
+`"|-abc-|" "|-NA-|"`
+
+```{r}
+x <- c("abc", NA)
+x[2] <- "NA"
+res <- str_c("|-",x,"-|")
+res
+```
+
+## 练习与作业2：`regular expression 正则表达式练习`
+
+------------------------------------------------------------------------
+
+### **用`starwars`变量作练习**
+
+注：需要先导入 `tidyverse` 包；
+
+1.  选出所有 `skin_color` 包含为 `white` 的人，显示其`name`, `homeworld`, `species`和`skin_color`；注意：有些人的skin color 可为多个；
+
+2.  打印出所有含有`ar`的名字；不区分大小写；
+
+```{r}
+library(tidyverse)
+skin_white <- starwars %>%
+  filter(str_detect(skin_color,"white")) %>%
+  select(name,homeworld,species,skin_color)
+skin_white
+all_name <- starwars$name
+all_name_ar <- c()
+for(i in 1:length(all_name))
+{
+  if(str_detect(tolower(all_name[i]),"ar"))
+  {
+    all_name_ar <- append(all_name_ar,all_name[i])
+    #因为不区分大小写，所以都转成小写后看有无ar
+  }
+}
+all_name_ar 
+```
+
+------------------------------------------------------------------------
+
+### **用下面的`vec`变量作练习**
+
+`vec <- c( "123", "abc", "wei555hua666" );`
+
+1.  找出含有数字的字符串；
+2.  找出数字的位置；如果字符串含有多组数数字，只显示第一组；
+3.  找出所有数字的位置；
+4.  提取出找到的数字；如果字符串含有多组数数字，只提取第一组；
+5.  提取所有的数字；
+6.  将数字替换为 666；
+
+```{r}
+vec <- c( "123", "abc", "wei555hua666" )
+#1
+str_subset(vec,"\\d+")
+#2
+str_locate(vec,"\\d+")
+#3
+str_locate_all(vec,"\\d+")
+#4
+str_extract(vec,"\\d+")
+#5
+str_extract_all(vec,"\\d+")
+#6
+str_replace_all(vec,"\\d+","666")
+```
+
+## 练习与作业3：探索题
+
+------------------------------------------------------------------------
+
+### **序列分析**
+
+用序列：`seq <- "ATCTCGGCGCGCATCGCGTACGCTACTAGC"` 实现以下分析；注：可使用任何包：
+
+1.  得到它的反向互补序列；
+2.  计算它的GC含量，用百分数表示；
+3.  把它拆分成一个个codon（即三个nucleotide形成一个codon；最后一个长度可以不为3；
+
+```{r}
+library(stringi)
+seq <- "ATCTCGGCGCGCATCGCGTACGCTACTAGC"
+#1
+seq_res <- seq %>%
+  str_replace_all("A","t") %>%
+  str_replace_all("T","a") %>%
+  str_replace_all("C","g") %>%
+  str_replace_all("G","c") %>%
+  #注意不能直接将A变为T，
+  #因为这样在把T变为A的过程中会把原有的T和A转换后的T都变为A
+  toupper() %>% #将小写变为大写
+  stri_reverse() #反向
+seq_res
+#2
+G_num <- str_count(seq,"G")
+C_num <- str_count(seq,"C")
+GC_percent <- (G_num+C_num)/str_length(seq)
+print(paste0(GC_percent*100,"%"))
+#3
+codon_list <- str_extract_all(seq,".{3}")#.{3}匹配任3个字符
+codon_list
+```
+
+### **问答**
+
+问：`stringr::str_pad` 的作用是什么？请举例回答
+
+答：填充字符串，用法为str_pad(处理类型,width,side=c("left","right","both"),pad=" ")
+
+处理类型:字符串/向量
+
+width:字符串填充后的宽度
+
+side:从哪边开始填充，默认从左边
+
+pad:用什么字符串填充
+
+```{r}
+str_pad("a",width = 10,pad = "-")
+#在a左面填充9个-，使总长为10
+str_pad(c("a","b"),width = 11,side = "both",pad = "*")
+#在a,b两侧各填充5个*，使总长为11
+```
+
+------------------------------------------------------------------------
+
+### **提取字符串中的N次重复字段**
+
+问：如何用正则表达式从字符串中提取任意长度为2字符的两次以上重复，比如：`1212`, `abab`, `tata`, 是 `12` 等的两次重复， `898989` 则是89的3次重复，以下面的变量为输入：
+
+`c( "banana", "coconut", "1232323", "database" )`
+
+```{r}
+x <- c( "banana", "coconut", "1232323", "database" )
+for(i in 1:length(x))
+{
+  res <- c()#声明res变量用于存储结果，要不append时会报错
+  all_word <- x[i] %>%
+    str_extract_all(".{2}")#按12 34 56分隔
+
+  x_new <- paste0(" ",x[i])
+  all_word_new <- x_new %>%
+    str_extract_all(".{2}")#按1 23 45 6分隔
+
+  all_word_unique <- all_word[[1]]
+  all_word_unique <- append(all_word_unique,all_word_new[[1]])
+  all_word_unique <- unique(all_word_unique)#unique去除重复元素
+  #得到分隔后的总结果，包含该字符串中所有长度为2的子串
+  for(j in 1:length(all_word_unique))
+  {
+    if(str_count(x[i],all_word_unique[j])>2)#如果该子串数量>2
+    {
+       res <- append(res,all_word_unique[j])#就存入结果中
+    }
+  }
+  print(res)
+}
+```
+
+### **正则表达式**
+
+设计一个正则表达式，可以完整识别所有以下格式的数字
+
+```         
+123
+123.45
+0.124
+-1.5
+-0.2
++1.3
+-11
+-199.62
+```
+
+```{r}
+s <- "^(\\-|\\+)?\\d+(\\.\\d+)?$"
+#^(\-|\+)?中\-和\+分别代表-和+，|是“或”，?表示-和+可有可无，
+#整体表示以1个-或+或什么也不加开头（\\为转义符号，实际上是\）
+#\d+表示至少要有1个数字
+#(\.\d+)?中\.表示小数点，\d+表示小数点后至少要有1个数字，
+#?表示小数点和小数点后数字这部分可有可无
+test <- c(123,123.45,0.124,-1.5,-0.2,+1.3,-11,-199.62)
+test <- as.character(test)
+str_detect(test,s)
+```
