@@ -265,15 +265,16 @@ str_pad(c("a","b"),width = 11,side = "both",pad = "*")
 
 ```{r}
 x <- c( "banana", "coconut", "1232323", "database" )
+/*
 for(i in 1:length(x))
 {
   res <- c()#声明res变量用于存储结果，要不append时会报错
   all_word <- x[i] %>%
-    str_extract_all(".{2}")#按12 34 56分隔
+    str_extract_all(".{2}")#按12 34 56分隔，取12、34、56
 
   x_new <- paste0(" ",x[i])
   all_word_new <- x_new %>%
-    str_extract_all(".{2}")#按1 23 45 6分隔
+    str_extract_all(".{2}")#按1 23 45 6分隔，取23、45
 
   all_word_unique <- all_word[[1]]
   all_word_unique <- append(all_word_unique,all_word_new[[1]])
@@ -288,6 +289,16 @@ for(i in 1:length(x))
   }
   print(res)
 }
+*/
+#更简单的方法，来自https://github.com/Lucas04-nhr/R-for-Data-Science/tree/main/Exercises%20and%20homework
+repeated_patterns =
+  str_extract(
+    x,
+    "(\\w{2})\\1+")
+#(\w{2})表示一个分组，该组内有2个字符（数字或字母），\1代表第一个分组已匹配的具体字符，+代表\1出现1次至多次
+#如232323，第一个23匹配(\w{2})，此时\1就指代23，即第二个23会匹配\1，\1+就表示23继续出现1次及以上，再加上(\w{2})对应的第一个23，23就出现2次及以上
+#缺点是只能匹配连续出现的重复字符，如1223124512这种就不能匹配成功
+print(repeated_patterns)
 ```
 
 ### **正则表达式**
