@@ -82,7 +82,7 @@ while((i <- rnorm(1))<1)#先把i赋值再判断，要不第一次循环找不到
 }
 print(paste0("最终i的值为",i))#最后一次的i值>1
 #4
-# fibonacci <- function(n)
+# fibonacci <- function(n)#递归计算Fibonacci数列第i项的值，使用该方法计算指定项的值要比底下一直做加法快一些，但对于该题需要从头一直算到第32项并与1000000作比较的情况，用加法会更快
 # {
 #   if(n==1)
 #   {
@@ -97,11 +97,11 @@ print(paste0("最终i的值为",i))#最后一次的i值>1
 #     return(fibonacci(n-1)+fibonacci(n-2))
 #   }
 # }
-# fibonacci(32)
+# fibonacci(32)#用于验算第32项是否>1000000
 count <- 1#循环次数
 a <- 0#用abc分别代表数列中的连续三项
 b <- 1#fibonacci数列的前两项分别为0和1
-while((c <- a+b)<=1000000) #c是第三项
+while((c <- a+b)<=1000000) #c是第三项，(c <- a+b)返回c的值 
 {
   a <- b
   b <- c#为了算第四项，需将ab都往下移一项
@@ -141,12 +141,12 @@ head(colSums(m))#列
 head(m %>% apply(.,1,sum))#行
 head(m %>% apply(.,2,sum))#列
 #5
-res_row <- m %>% apply(.,1,function(x) 
+res_row <- m %>% apply(.,1,function(x)#行
 { 
   return(c(mean = mean(x),sum = sum(x),sd = sd(x)))
 })
-res_row[1:3,1:5]
-res_col <- m %>% apply(.,2,function(x) 
+res_row[1:3,1:5]#为便于knit，只展示1-3行和1-5列
+res_col <- m %>% apply(.,2,function(x)#列
 { 
   return(c(mean = mean(x),sum = sum(x),sd = sd(x)))
 })
@@ -314,7 +314,7 @@ for(i in 1:length(dfs))
     pivot_longer(-name,names_to = "class",values_to = "value") 
   dfs_i_tibble$value <- as.character(dfs_i_tibble$value)
   #将value列的属性都变为character，因为合并时不能将不同属性的值合并为1列
-  #如dfs[[1]]的value列就是dbl类型，而其它的都是chr，不能合并
+  #如dfs[[1]]的value列就是dbl类型，而dfs[[2]]和[[3]]的value列都是chr，不能合并
   dfs_tibble <- bind_rows(dfs_tibble,dfs_i_tibble)#循环合并成长tibble
 }
 dfs_tibble %>%
@@ -341,8 +341,7 @@ map2(mu, sigma, rnorm, n = 5)
 ```
 
 ```{r}
-#map2(mu,sigma,rnorm,n = 5)
-#是依次将mu的第i个元素和sigma的第i个元素传入rnorm中，
+#map2(mu,sigma,rnorm,n = 5)依次将mu的第i个元素和sigma的第i个元素传入rnorm中，n=5指定了rnorm的n参数值为5
 #rnorm函数运算结果即为输出list的第i个元素
 res <- list()
 for(i in 1:length(mu))
