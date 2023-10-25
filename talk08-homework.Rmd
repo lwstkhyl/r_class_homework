@@ -1,0 +1,431 @@
+---
+title: "talk08 练习与作业"
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: true
+    toc_depth: 2
+  word_document: default
+  html_document:
+    df_print: paged
+knit: (
+  function(inputFile, encoding) { 
+
+    pSubTitle <- 'talk08-homework'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(sub_title = pSubTitle),      
+      output_file = pSubTitle) })
+---
+
+## 练习和作业说明
+
+将相关代码填写入以 \`\`\`{r} \`\`\` 标志的代码框中，运行并看到正确的结果；
+
+完成后，用工具栏里的"Knit"按键生成PDF文档；
+
+**将PDF文档**改为：**`姓名-学号-talk08作业.pdf`**，并提交到老师指定的平台/钉群。
+
+## talk08 内容回顾
+
+-   for loop
+-   `apply` functions
+-   `dplyr` 的本质是 遍历
+-   `map` functions in `purrr` package
+-   遍历 与 并行计算
+
+## 练习与作业：用户验证
+
+请运行以下命令，验证你的用户名。
+
+**如你当前用户名不能体现你的真实姓名，请改为拼音后再运行本作业！**
+
+```{r}
+Sys.info()[["user"]]
+Sys.getenv("HOME")
+```
+
+## 练习与作业1：loop 初步
+
+------------------------------------------------------------------------
+
+### **`loop`练习 （部分内容来自 r-exercises.com 网站）**
+
+1.  写一个循环，计算从1到7的平方并打印 `print`；
+2.  取`iris`的列名，计算每个列名的长度，并打印为下面的格式： `Sepal.Length (12)`；
+3.  写一个`while`循环，每次用 `rnorm`取一个随机数字并打印，直到取到的数字大于1；
+4.  写一个循环，计算Fibonacci序列的值超过1百万所需的循环数；注：Fibonacci 序列的规则为：`0, 1, 1, 2, 3, 5, 8, 13, 21 ...`;
+
+```{r}
+library(tidyverse)
+library(stringr)
+#1
+for(i in 1:7)
+{
+  print(i**2)
+}
+#2
+col_names <- colnames(iris)
+for(i in 1:length(col_names))
+{
+  print(paste0(col_names[i]," (",str_length(col_names[i]),")"))
+}
+#3
+#rnorm就是取1个随机数
+while((i <- rnorm(1))<1)#先把i赋值再判断，要不第一次循环找不到i
+{
+  print(i)
+}
+print(paste0("最终i的值为",i))#最后一次的i值>1
+#4
+# fibonacci <- function(n)
+# {
+#   if(n==1)
+#   {
+#     return(0)
+#   }
+#   else if(n==2)
+#   {
+#     return(1)
+#   }
+#   else
+#   {
+#     return(fibonacci(n-1)+fibonacci(n-2))
+#   }
+# }
+# fibonacci(32)
+count <- 1#循环次数
+a <- 0#用abc分别代表数列中的连续三项
+b <- 1#fibonacci数列的前两项分别为0和1
+while((c <- a+b)<=1000000) #c是第三项
+{
+  a <- b
+  b <- c#为了算第四项，需将ab都往下移一项
+  count <- count+1#次数加1
+}
+print(paste0("数列中第",count+2,"项值>1000000"))
+```
+
+## 练习与作业2：loop进阶，系统和其它函数
+
+------------------------------------------------------------------------
+
+### **生成一个数字`matrix`，并做练习**
+
+生成一个 100 x 100 的数字 `matrix`：
+
+1.  行、列平均，用`rowMeans`, `colMeans`函数；
+2.  行、列平均，用 `apply` 函数
+3.  行、列总和，用`rowSums`, `colSums` 函数；
+4.  行、列总和，用 `apply` 函数
+5.  使用自定义函数，同时计算：
+    -   行平均、总和、 sd
+    -   列平均、总和、 sd
+
+```{r}
+m <- matrix(1:10000,nrow = 100)
+#1
+head(rowMeans(m))#行
+head(colMeans(m))#列
+#2
+head(m %>% apply(.,1,mean))#行
+head(m %>% apply(.,2,mean))#列
+#3
+head(rowSums(m))#行
+head(colSums(m))#列
+#4
+head(m %>% apply(.,1,sum))#行
+head(m %>% apply(.,2,sum))#列
+#5
+res_row <- m %>% apply(.,1,function(x) 
+{ 
+  return(c(mean = mean(x),sum = sum(x),sd = sd(x)))
+})
+res_row[1:3,1:5]
+res_col <- m %>% apply(.,2,function(x) 
+{ 
+  return(c(mean = mean(x),sum = sum(x),sd = sd(x)))
+})
+res_col[1:3,1:5]
+```
+
+------------------------------------------------------------------------
+
+### **用`mtcars`进行练习**
+
+用`tapply`练习：
+
+1.  用 **汽缸数** 分组， 计算 **油耗** 的 **平均值** ；
+2.  用 **汽缸数** 分组， 计算 **wt** 的 **平均值** ；
+
+用 `dplyr` 的函数实现上述计算
+
+```{r}
+#1
+library(magrittr)
+mtcars %$% tapply( mpg, cyl, mean )#每加仑油能跑多少英里
+mtcars %$% tapply( 1/mpg, cyl, mean )#每跑1英里耗多少加仑油
+mtcars %$% tapply( wt, cyl, mean )#重量
+#2
+library(dplyr)
+mpg_mean <- mtcars %>% 
+  group_by(cyl) %>% 
+  summarise(mean(mpg))
+mpg_mean
+wt_mean <- mtcars %>% 
+  group_by(cyl) %>% 
+  summarise(mean(wt))
+wt_mean
+```
+
+------------------------------------------------------------------------
+
+### **练习`lapply`和`sapply`**
+
+1.  分别用 `lapply`和`sapply` 计算下面`list`里每个成员 `vector`的长度：
+
+`list( a = 1:10, b = letters[1:5], c = LETTERS[1:8] )`;
+
+2.  分别用 `lapply`和`sapply` 计算 `mtcars` 每列的平均值；
+
+```{r}
+#1
+list( a = 1:10, b = letters[1:5], c = LETTERS[1:8] ) %>% 
+  sapply( function(x) { length(x) } )
+list( a = 1:10, b = letters[1:5], c = LETTERS[1:8] ) %>% 
+  lapply( function(x) { length(x) } )
+#2
+mtcars %>% sapply(function(x){mean(x)})
+mtcars %>% lapply(function(x){mean(x)})
+```
+
+## 练习与作业3：loop进阶，`purr`包的函数
+
+------------------------------------------------------------------------
+
+### **`map`初步**
+
+生成一个变量：
+
+```         
+df <- tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+```
+
+用 `map` 计算：
+
+-   列 平均值、总和和中值
+
+```{r}
+df <- tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+library(purrr)
+df %>% map(function(x){c(mean=mean(x),sum=sum(x),median=median(x))})
+```
+
+------------------------------------------------------------------------
+
+### **`map`进阶**
+
+用 `map` 配合 `purr` 包中其它函数，用 `mtcars` ：
+
+为每一个 **汽缸数** 计算 燃油效率`mpg`与重量`wt`的相关性（Pearson correlation），得到 p 值和 correlation coefficient 值。
+
+```{r}
+mtcars %>% split( .$cyl ) %>%
+  map( ~ cor.test( .$wt, .$mpg ) ) 
+```
+
+------------------------------------------------------------------------
+
+### **`keep`和`discard`**
+
+1.  保留 `iris` 中有 `factor` 的列，并打印前10行；
+2.  去掉 `iris` 中有 `factor` 的列，并打印前10行；
+
+```{r}
+#keep和discard接收一个判断条件的函数，
+#当x（即传入函数中的列）满足条件时，保留/舍弃该列
+keep_factor <- iris %>% 
+  keep(function(x){is.factor(x)==T})
+head(keep_factor,n=10)
+discard_factor <- iris %>% 
+  discard(function(x){is.factor(x)==T})
+head(discard_factor,n=10)
+```
+
+------------------------------------------------------------------------
+
+### **用`reduce`**
+
+用 `reduce` 得到以下三个vector中共有的数字：
+
+```         
+c(1, 3, 5, 6, 10),
+  c(1, 2, 3, 7, 8, 10),
+  c(1, 2, 3, 4, 8, 9, 10)
+```
+
+```{r}
+c1 <- c(1, 3, 5, 6, 10)
+c2 <- c(1, 2, 3, 7, 8, 10)
+c3 <- c(1, 2, 3, 4, 8, 9, 10)
+#intersect(c1,c2)函数求c1和c2中共有的元素，但不能接收3个参数
+reduce(list(c1,c2,c3),function(x,y){intersect(x,y)})
+#将c1和c2传入function(x,y)中，并将函数返回的结果和c3继续传入，
+#直到没元素可传就输出结果
+```
+
+------------------------------------------------------------------------
+
+### **运行以下代码，观察得到的结果，并用`tidyverse`包中的 `spread` 等函数实现类似的结果**
+
+```{r}
+dfs <- list(
+  age = tibble(name = "John", age = 30),
+  sex = tibble(name = c("John", "Mary"), sex = c("M", "F")),
+  trt = tibble(name = "Mary", treatment = "A")
+)
+dfs
+dfs %>% reduce(full_join);
+```
+
+```{r}
+#由题意，最后一步是tibble的长变宽，由此可知需要把list变成一个长的tibble,
+#有name列、class列存储sex age等属性、value列存储对应的值，
+#这样长变宽时就把class作列名，value作列值
+dfs_tibble <- tibble()#初始化一个空的tibble作为想要的长tibble
+for(i in 1:length(dfs))
+{
+  dfs_i_tibble <- dfs[[i]] %>% 
+  #df[[i]]就是取list的第i个元素(tibble)
+    pivot_longer(-name,names_to = "class",values_to = "value") 
+  dfs_i_tibble$value <- as.character(dfs_i_tibble$value)
+  #将value列的属性都变为character，因为合并时不能将不同属性的值合并为1列
+  #如dfs[[1]]的value列就是dbl类型，而其它的都是chr，不能合并
+  dfs_tibble <- bind_rows(dfs_tibble,dfs_i_tibble)#循环合并成长tibble
+}
+dfs_tibble %>%
+  pivot_wider(names_from = class,values_from = value) %>%
+  type.convert(as.is = TRUE)#根据每列的值自动改变列属性
+```
+
+## 练习与作业4：pmap 和 map 的更多用法
+
+------------------------------------------------------------------------
+
+请参考 <https://r4ds.had.co.nz/iteration.html> 的 Mapping over multiple arguments 部分
+
+### map2
+
+运行以下代码，查看输出结果。用 for 循环重现计算结果。
+
+```{r}
+mu <- list(5, 10, -3);
+sigma <- list(1, 5, 10);
+map2(mu, sigma, rnorm, n = 5)
+#rnorm(n, mean = 0, sd = 1)
+#n为产生随机值个数，mean 是平均数（用mu表示），sd 是标准差（用sigma表示）
+```
+
+```{r}
+#map2(mu,sigma,rnorm,n = 5)
+#是依次将mu的第i个元素和sigma的第i个元素传入rnorm中，
+#rnorm函数运算结果即为输出list的第i个元素
+res <- list()
+for(i in 1:length(mu))
+{
+  res_i <- rnorm(mean = mu[[i]],sd = sigma[[i]],n = 5)
+  res_i <- list(res_i)#将vector转成list，便于后面直接添加到res中
+  res <- append(res,res_i)
+}
+res
+```
+
+### pmap
+
+运行以下代码，查看输出结果。用 for 循环重现计算结果。
+
+```{r}
+params <- tribble(
+  ~mean, ~sd, ~n,
+    5,     1,  1,
+   10,     5,  3,
+   -3,    10,  5
+)
+params %>% 
+  pmap(rnorm)
+```
+
+```{r}
+#pmap(.l,.f,...)其中.l为数据框，.f为要应用的多元函数
+#.f 是几元函数，对应数据框 .l 有几列，
+#.f 将依次在数据框 .l 的每一行上进行迭代
+#即.f接收.l第i行的所有数据作为自己的参数，.f的输出作为结果的第i个元素
+res <- list()
+for(i in 1:nrow(params))#i为第i行
+{
+  res_i <- rnorm(mean = params[[i,"mean"]],#取第i行中列名为mean的元素
+                 sd = params[[i,"sd"]],
+                 n = params[[i,"n"]])
+  res_i <- list(res_i)
+  res <- append(res,res_i)
+}
+res
+```
+
+## 练习与作业5：并行计算
+
+------------------------------------------------------------------------
+
+### **安装相关包，成功运行以下代码，观察得到的结果，并回答问题**
+
+```         
+* parallel
+* foreach
+* iterators
+```
+
+```{r}
+library(parallel); ## 
+library(foreach);
+library(iterators);
+
+## 检测有多少个 CPU --
+( cpus <- parallel::detectCores() );
+
+## 创建一个 data.frame 
+d <- data.frame(x=1:10000, y=rnorm(10000));
+
+## make a cluster --
+cl <- makeCluster( cpus - 1 );
+
+## 分配任务 ... 
+res <- foreach( row = iter( d, by = "row" ) ) %dopar% {
+  return ( row$x * row$y  );
+}
+
+## 注意在最后关闭创建的 cluster 
+stopCluster( cl );
+
+summary(unlist(res));
+```
+
+**问**：你的系统有多少个CPU？此次任务使用了多少个？ **答**：用代码打印出相应的数字即可：
+
+```{r}
+print(paste0("系统共有",parallel::detectCores(),"个CPU"))
+print(paste0("此次使用了",cpus - 1,"个"))
+```
