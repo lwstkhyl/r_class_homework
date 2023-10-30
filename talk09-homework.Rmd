@@ -1,0 +1,317 @@
+---
+title: "talk09 练习与作业"
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: true
+    toc_depth: 2
+  word_document: default
+  html_document:
+    df_print: paged
+knit: (
+  function(inputFile, encoding) { 
+
+    pSubTitle <- 'talk09-homework'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(sub_title = pSubTitle),      
+      output_file = pSubTitle) })
+---
+
+## 练习和作业说明
+
+将相关代码填写入以 \`\`\`{r} \`\`\` 标志的代码框中，运行并看到正确的结果；
+
+完成后，用工具栏里的"Knit"按键生成PDF文档；
+
+**将PDF文档**改为：**`姓名-学号-talk09作业.pdf`**，并提交到老师指定的平台/钉群。
+
+## talk09 内容回顾
+
+-   basic plot
+-   ggplot2
+
+### layered grammer (图层语法) 的成分
+
+-   图层 ( geom_xxx )
+-   scale ( scale_xxx )
+-   faceting ( facet_xxx )
+-   坐标系统
+
+### 图象类型
+
+-   点图
+-   bars
+-   boxplots
+
+### 其它重要内容（部分需要自学）
+
+-   colours
+-   theme
+-   其它图像类型
+-   图例（legends）和 坐标轴
+-   图形注释和其它定制
+
+## 练习与作业：用户验证
+
+请运行以下命令，验证你的用户名。
+
+**如你当前用户名不能体现你的真实姓名，请改为拼音后再运行本作业！**
+
+```{r}
+Sys.info()[["user"]]
+Sys.getenv("HOME")
+```
+
+## 练习与作业1：基础做图 & ggplot2
+
+------------------------------------------------------------------------
+
+### **用`swiss`数据做图**
+
+1.  用直方图`histogram`显示 `Catholic` 列的分布情况；
+2.  用散点图显示`Eduction`与`Fertility`的关系；将表示两者关系的线性公式、相关系数和p值画在图的空白处。
+
+注：每种图提供**基础做图函数**和**ggplot2**两个版本！
+
+```{r}
+library(ggplot2)
+#基础作图函数
+#直方图↓
+hist(x=swiss$Catholic,
+     main = "Catholic",
+     xlab = "Catholic")
+#散点图↓
+with(swiss,plot(Education,Fertility,
+                col = "blue"))#绘制基础散点图
+abline(lm(swiss$Fertility ~ swiss$Education),
+       col="red")#添加拟合曲线
+cor_val <- cor(swiss$Fertility, swiss$Education)#相关系数
+p_val <- cor.test(swiss$Fertility,swiss$Education)$p.value#p值
+legend("topright",
+       legend = paste("Correlation =",
+                      round(cor_val, 2),#保留2位小数
+                      "\n",
+                      "p-value =",
+                      round(p_val, 4)),)
+
+#ggplot2
+#直方图↓
+ggplot(swiss,aes(x=Catholic))+
+  geom_histogram()
+#散点图↓
+ggplot(swiss, aes(x = Education,y = Fertility)) +
+  geom_point(color = "blue",size = 3) +#绘制基础散点图
+  geom_smooth(method = "lm",color = "red") +#添加拟合曲线
+  labs(title = "Education~Fertility", x = "Education", y = "Fertility") +#标题和xy轴
+  annotate("text",#声明注释的类型为文本
+           x = 20, y = 35,#添加注释的位置
+           label = paste("Correlation =", #注释内容
+                         round(cor_val, 2),
+                         "\n", 
+                         "p-value =", 
+                         round(p_val, 4)))
+```
+
+------------------------------------------------------------------------
+
+### **用`iris`作图**
+
+1.  用散点图显示 `Sepal.Length` 和 `Petal.Length` 之间的关系；按 `species` 为散点确定颜色，并画出 legend 以显示 `species` 对应的颜色； 如下图所示： ![](images/talk09-homework-plot02.png)
+2.  用 boxplot 显示`species`之间 `Sepal.Length` 的分布情况；
+
+注：每种图提供**基础做图函数**和**ggplot2**两个版本！
+
+```{r}
+colors <- c("setosa" = "black","versicolor" = "red","virginica" = "green")#建立物种与颜色的对应（一个字典）
+
+#基础作图函数
+#散点图↓
+with(iris,
+     plot(Sepal.Length,Petal.Length,#基础散点图
+          col = colors[Species],#按物种分配颜色
+#注：colors[Species]是在画图时按colors这个对应标注颜色，如果只写col=colors，效果等效于colors <- c("red","green","blue")
+          pch = 19,#设置颜色为填充色，而不是边缘颜色
+          xlab = "Sepal.Length",ylab = "Petal.Length"))#设置xy轴标题
+legend("topleft",#设置图例位置
+       legend = levels(iris$Species),#设置图例中的元素来自iris$Species
+       col = colors,#按之前的对应设置颜色
+       pch = 19,#颜色为填充色
+       title = "Species")#图例的标题
+#boxplot↓
+boxplot(Sepal.Length~Species,data = iris)
+
+#ggplot2
+#散点图↓
+ggplot(iris,aes(x = Sepal.Length,y = Petal.Length,#xy轴数据
+                color = Species),#按物种分颜色
+       labs(x = Sepal.Length,y = Petal.Length))+#设置xy轴标签
+  geom_point()+#画散点图
+  scale_color_manual(values = colors)+#手动设置颜色
+  theme(legend.position = "top")#设置图例位置
+#boxplot↓
+ggplot(iris,aes(x = Species,y = Sepal.Length))+
+  geom_boxplot()
+```
+
+------------------------------------------------------------------------
+
+### **用 ggplot 作图：`boxplot`**
+
+用 `starwars` 的数据作图，画 `boxplot` 显示身高 `height` 与性别 `gender` 的关系。要求：
+
+1.  `height` 为NA的，不显示；
+2.  用`ggsignif`包计算 `feminine` 和 `masculine` 两种性别的身高是否有显著区别，并在图上显示。
+3.  将此图的结果保存为变量 **`p1`** ，以备后面使用；
+
+最终结果如图所示：
+
+![](images/talk09-homework-plot01.png)
+
+```{r}
+library(tidyverse)
+library(dplyr)
+starwars_noNA <- starwars %>% #获取没有NA的数据
+  dplyr::filter(is.na(height)==FALSE&is.na(gender)==FALSE)
+base_boxplot <- ggplot(starwars_noNA,aes(x = gender,y = height))+
+  geom_boxplot()+
+  labs(x = "gender",y = "height")#创建基础boxplot
+library(ggsignif)
+p1 <- base_boxplot+
+  geom_signif(comparisons = list(c("feminine", "masculine")),#设置需要比较的组
+              map_signif_level = T)#将图像上方的p值以*代替
+p1
+```
+
+------------------------------------------------------------------------
+
+### **用 ggplot 作图：使用`iris`做图**
+
+用`geom_density2d`显示`Sepal.Length`和`Sepal.Width`之间的关系，同时以 `Species` 为分组，结果如图所示：
+
+将此图的结果保存为变量 **`p2`** ，以备后面使用；
+
+![](images/talk09-homework-plot03.png)
+
+```{r}
+p2 <- ggplot(iris,aes(x = Sepal.Length,y = Sepal.Width,
+                      color = Species,#颜色按物种分组
+                      shape = Species))+#点形状也按物种分组
+  geom_density2d()+#画geom_density2d图
+  geom_point()+#画散点图
+  labs(title = "IRIS")#添加标题
+p2
+```
+
+------------------------------------------------------------------------
+
+### **用 ggplot 作图：`facet`**
+
+用 `mtcars` 作图，显示 `wt` 和 `mpg` 之间的关系，但用 `cyl` 将数据分组；见下图：
+
+将此图的结果保存为变量 **`p3`** ，以备后面使用；
+
+![](images/talk09-homework-plot04.png)
+
+**注** 此图中的 `468` 组为所有数据合在一起的结果。
+
+```{r}
+#大体思路就是建一个新数据集，由mtcars和mtcars_new组成，mtcars_new就是把mtcars中cyl全改成468，因为facet_wrap要按cyl分组，这样才能分为4 6 8 468四组，其中468组包含全部mtcars全部数据
+rm(mtcars)#重置mtcars数据集
+mtcars_old <- mtcars#保存原mtcars
+mtcars$cyl <- 468#更改列值
+mtcars_468 <- mtcars#保存新mtcars
+mtcars_new <- dplyr::bind_rows(mtcars_old,mtcars_468)#合并
+p3 <- ggplot(mtcars_new,aes(x = wt,y = mpg,
+                            col = factor(cyl)))+#按颜色分组
+  geom_point()+#画散点图
+  geom_smooth()+#添加拟合曲线
+  scale_color_manual(breaks = c("4","6","8","468"),
+                     values = c("red","green","blue","purple"))+#手动设置颜色，breaks与values一一相对(cyl=4的颜色是red)
+  labs(x = "Weight",y = "MPG")+#添加xy轴标签
+  facet_wrap(.~cyl,#按cyl分成多列
+             ncol = 2,#列数为2
+             scales = "free",#设置xy轴不统一
+             dir = "h")#按水平方向排布，即第一行是46第二行是8，若是v就是48 )
+p3
+```
+
+------------------------------------------------------------------------
+
+### **用 ggplot 作图：用`mtcars`做`polar`图**
+
+用 `mtcars` 的 `mpg` 列做如下图，要求：先按 `cyl` 排序；每个`cyl`组内按 `mpg`排序； 将此图的结果保存为变量 **`p4`** ，以备后面使用；
+
+**提示**
+
+1.  先增加一列，用于保存 rowname : `mtcars %>% rownames_to_column()` **注**： 将行名变为列，列名为 `rowname`
+2.  完成排序
+3.  更改 rowname 的 factor
+4.  计算每个 rowname 的旋转角度： `mutate( id = row_number(), angle = 90 - 360 * (id - 0.5) / n() )`
+
+![](images/talk09-homework-plot05.png)
+
+```{r}
+## 代码写这里，并运行；
+
+```
+
+## 练习与作业2：多图组合，将多个图画在一起
+
+------------------------------------------------------------------------
+
+### **用`cowplot::ggdraw`将 `p1`, `p2`和`p3`按下面的方式组合在一起**
+
+注：需要先安装 `cowplot` 包
+
+![](images/talk09-homework-plot06.png)
+
+```{r}
+## 代码写这里，并运行；
+
+```
+
+------------------------------------------------------------------------
+
+### **用`gridExtra::grid.arrange()`函数将 `p1`, `p2`, `p4` 按下面的方式组合在一起**
+
+注：1. 需要安装 `gridExtra` 包； 2. 请为三个panel加上 A, B, C 字样的标签。
+
+![](images/talk09-homework-plot07.png)
+
+```{r}
+## 代码写这里，并运行；
+
+```
+
+------------------------------------------------------------------------
+
+### **用`patchwork`包中的相关函数将 `p1`, `p2`, `p3`, `p4` 按下面的方式组合在一起**
+
+注：1. 需要安装 `patchwork` 包； 2. 为四个panel加上 A, B, C, D 字样的标签。
+
+![](images/talk09-homework-plot08.png)
+
+```{r}
+## 代码写这里，并运行；
+
+```
+
+## 练习与作业3：作图扩展
+
+------------------------------------------------------------------------
+
+### **`scatterplot`**
+
+安装 `lattice` 包，并使用其 `splom` 函数作图：
+
+`lattice::splom( mtcars[c(1,3,4,5,6)] )`
+
+```{r}
+## 代码写这里，并运行；
+
+```
