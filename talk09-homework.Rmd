@@ -256,8 +256,27 @@ p3
 ![](images/talk09-homework-plot05.png)
 
 ```{r}
-## 代码写这里，并运行；
-
+rm(mtcars)#重置mtcars
+data <- mtcars %>% 
+  rownames_to_column() %>% #行名变成列
+  arrange(cyl,mpg) #以cyl为主序，mpg为次序，即先排cyl，再在其基础上排mpg。可以看成先按cyl分组，再在组内排序mpg
+#注：不能写group_by(cyl)再arrange(mpg)，因为group_by只对summary等函数有用
+data$rowname <- factor(data$rowname,#将rowname列改成向量形式
+                       levels = data$rowname)
+data <- data %>%
+  mutate(id = row_number(),
+         angle = 90-360*(id-0.5)/n())#按题意增加列
+p4 <- ggplot(data,aes(x = rowname,y = mpg,fill = factor(cyl)))+
+  geom_bar(stat = "identity")+#基础柱状图
+  coord_polar(theta = "x")+#画polar图（将x轴变为圆形）
+  geom_text(aes(x=1:length(data$rowname),
+                label = data$rowname,
+                angle = data$angle,
+                hjust = 0))+#添加文本（x轴名称），hjust是文字距中心的距离
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())+#不显示主网格线（就是平行xy轴的那些刻度线）
+  theme(axis.ticks = element_blank(),axis.text.y = element_blank(),axis.text.x = element_blank())+#不显示刻度和xy轴刻度文本
+  labs(x = "",y = "")#不显示xy轴名称
+p4
 ```
 
 ## 练习与作业2：多图组合，将多个图画在一起
