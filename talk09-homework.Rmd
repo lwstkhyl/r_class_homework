@@ -305,7 +305,7 @@ p4 <- ggplot(data,aes(x = rowname,y = mpg,
                       fill = factor(cyl)))+#按cyl填充颜色
   scale_y_continuous(expand = c(0.01,max(data$mpg)/3))+#修改y轴范围（起始值和结束值），反映到图上就是中间圆的大小和外面一圈柱子的长短
   geom_bar(stat = "identity")+#基础柱状图
-  coord_polar(theta = "x",start = 0)+#画polar图（将x轴变为圆形）
+  coord_polar(theta = "x",start = 0)+#画polar图（将x轴变为圆形），start是起始角度
   geom_text(aes(x=1:length(data$rowname),
                 label = data$rowname,
                 angle = data$angle,
@@ -338,6 +338,7 @@ ggdraw()+
   draw_plot(p1, 0.5, 0.5, 0.5, 0.5) +
   draw_plot(p2, 0.5, 0, 0.5, 0.5) +
   draw_plot_label(c("A", "B", "C"), c(0, 0.5, 0.5), c(1, 1, 0.5), size = 10)
+#设置label位置：第一个vector为标签名称，第二个为标签x位置，第三个为y位置，即A标签的x=0,y=1
 ```
 
 ------------------------------------------------------------------------
