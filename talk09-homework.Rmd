@@ -85,7 +85,7 @@ m <- lm(Fertility ~ Education,swiss)
 cor_val <- cor(swiss$Fertility, swiss$Education)#相关系数
 p_val <- cor.test(swiss$Fertility,swiss$Education)$p.value#p值
 eq <- substitute(atop(paste(italic(y)," = ",a + b %.% italic(x),sep = ""),
-                      paste("cor"," = ",cor,", ",italic(p)," = ",pvalue,sep = "")),
+                      paste(italic(r)^2," = ",cor,", ",italic(p)," = ",pvalue,sep = "")),
                       list(a = as.vector(format(coef(m)[1],digits = 2)),
                            b = as.vector(format(coef(m)[2],digits = 2)),
 #format使数字按科学计数法进行显示，digits是显示的位数
@@ -121,7 +121,7 @@ ggplot(swiss,aes(x=Catholic))+
 ggplot(swiss, aes(x = Education,y = Fertility)) +
   geom_point(color = "blue",size = 3) +#绘制基础散点图
   geom_smooth(method = "lm",color = "red") +#添加拟合曲线
-  labs(title = "Education~Fertility", x = "Education", y = "Fertility") +#标题和xy轴
+  labs(title = "Fertility~Education", x = "Education", y = "Fertility") +#标题和xy轴
   #以下注释为其中一种添加公式的方法
   # annotate("text",#声明注释的类型为文本
   #          x = 20, y = 35,#添加注释的位置
