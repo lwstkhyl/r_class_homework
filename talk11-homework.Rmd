@@ -1,0 +1,225 @@
+---
+title: "talk11 练习与作业"
+documentclass: ctexart
+output:
+  rticles::ctex:
+    fig_caption: yes
+    number_sections: yes
+    toc: true
+    toc_depth: 2
+  word_document: default
+  html_document:
+    df_print: paged
+knit: (
+  function(inputFile, encoding) { 
+
+    pSubTitle <- 'talk11-homework'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(sub_title = pSubTitle),      
+      output_file = pSubTitle) })
+---
+
+## 练习和作业说明
+
+将相关代码填写入以 \`\`\`{r} \`\`\` 标志的代码框中，运行并看到正确的结果；
+
+完成后，用工具栏里的"Knit"按键生成PDF文档；
+
+**将PDF文档**改为：**`姓名-学号-talk11作业.pdf`**，并提交到老师指定的平台/钉群。
+
+## talk11 内容回顾
+
+待写 ..
+
+## 练习与作业：用户验证
+
+请运行以下命令，验证你的用户名。
+
+**如你当前用户名不能体现你的真实姓名，请改为拼音后再运行本作业！**
+
+```{r}
+Sys.info()[["user"]]
+Sys.getenv("HOME")
+```
+
+## 练习与作业1：linear regression
+
+------------------------------------------------------------------------
+
+### **一元回归分析**
+
+用 `readr` 包的函数将 `Excercises and homework/data/talk11/` 目录下的 `income.data_.zip` 文件装入到 `income.dat` 变量中，进行以下分析：
+
+1.  用线性回归分析 `income` 与 `happiness` 的关系；
+2.  用点线图画出`income` 与 `happiness` 的关系，将推导出来的公式写在图上；
+3.  用得到的线性模型，以`income`为输入，预测`happiness`的值；
+4.  用点线图画出预测值与真实`happiness`的关系，并在图上写出 R2 值。
+
+```{r}
+library(readr)
+income.dat <- read_csv(unzip("data/talk11/income.data_.zip","income.data.csv"))
+head(income.dat)
+#1
+m <- lm(income.dat$happiness ~ income.dat$income)
+m
+#2
+library(ggplot2)
+eq <- substitute(atop(paste(italic(y)," = ",a + b %.% italic(x),sep = "")),
+                 list(a = as.vector(format(coef(m)[1],digits = 2)),
+                      b = as.vector(format(coef(m)[2],digits = 2))))
+eq_expression <- as.character(as.expression(eq))#公式
+ggplot(income.dat,aes(x = income,y = happiness))+
+  geom_line(color = "white")+#折线图
+  geom_point(color = "blue")+#散点图
+  geom_smooth(method = "lm",color = "red")+#添加smooth图层
+  labs(x = "income",y = "happiness")+
+  geom_text(data = NULL,
+            aes(x = 2,y =7,label = eq_expression,hjust = 0,vjust = 1),
+            size = 4,parse = TRUE,inherit.aes = FALSE)
+#3
+happiness_predict <- predict(m,data.frame(income.dat$income))
+#4
+dat <- data.frame(reference = income.dat$happiness,prediction = happiness_predict)
+cor_val <- cor(income.dat$happiness,income.dat$income)
+eq_cor <- substitute(atop(paste(italic(R^2)," = ",cor,sep = "")),
+                 list(cor = as.vector(format(cor_val,digits = 2))))
+eqcor_expression <- as.character(as.expression(eq_cor))
+ggplot( dat , aes( x = reference, y = prediction ) ) + 
+  geom_point() +
+  geom_smooth( method = "lm", se = F )+
+  geom_text(data = NULL,
+            aes(x = 0.5,y =5.5,label = eqcor_expression,hjust = 0,vjust = 1),
+            size = 4,parse = TRUE,inherit.aes = FALSE)
+```
+
+------------------------------------------------------------------------
+
+### **多元回归分析**
+
+用 `readr` 包的函数将 `Excercises and homework/data/talk11/` 目录下的 `heart.data_.zip` 文件装入到 `heart.dat` 变量中，进行以下分析：
+
+1.  用线性回归分析 `heart.disease` 与 `biking` 和 `smoking` 的关系；
+2.  写出三者间关系的线性公式；
+3.  解释`biking` 和 `smoking`的影响（方向和程度）；
+4.  `biking` 和 `smoking`能解释多少`heart.disease`的variance？这个值从哪里获得？
+5.  用 `relaimpo`包的函数计算`biking` 和 `smoking`对`heart.disease`的重要性。哪个更重要？
+6.  用得到的线性模型预测`heart.disease`，用点线图画出预测值与真实值的关系，并在图上写出 R2 值。
+7.  在建模时考虑 `biking` 和 `smoking`的互作关系，会提高模型的 R2 值吗？如果是，意味着什么？如果不是，又意味着什么？
+
+```{r,warning=FALSE}
+heart.dat <- read_csv(unzip("data/talk11/heart.data_.zip","heart.data.csv"))
+head(heart.dat)
+#1
+m2 <- lm(heart.disease ~ biking + smoking,data = heart.dat)
+#2
+paras <- coef(m2)
+intercept <- as.vector(format(paras[1],digits = 2))
+a <- as.vector(format(paras["biking"],digits = 2))
+b <- as.vector(format(paras["smoking"],digits = 2))
+paste("heart.disease"," = ",intercept,"+",a,"*biking","+",b,"*smoking",sep = "")
+#3
+anova(m2)
+#可知两者均有显著影响，
+#其中biking能降低heart.disease，而smoking能升高heart.disease
+#4
+vcov(m2)
+#5
+library(relaimpo)
+calc.relimp(heart.disease ~ biking + smoking,data = heart.dat)
+#biking更重要
+#6
+library(dplyr)
+newdata <- heart.dat %>%
+  dplyr::select(biking,smoking)
+heart_predict <- predict(m2,newdata)
+dat2 <- data.frame( reference = heart.dat$heart.disease, prediction = heart_predict)
+cor_val2 <- cor(heart_predict,heart.dat$heart.disease)
+eq_cor2 <- substitute(atop(paste(italic(R^2)," = ",cor,sep = "")),
+                 list(cor = as.vector(format(cor_val2,digits = 2))))
+eqcor_expression2 <- as.character(as.expression(eq_cor2))
+ggplot( dat2 , aes( x = reference, y = prediction ) ) +
+  geom_point() +
+  geom_smooth( method = "lm", se = F )+
+  geom_text(data = NULL,
+            aes(x = 1,y =18,label = eqcor_expression2,hjust = 0,vjust = 1),
+            size = 4,parse = TRUE,inherit.aes = FALSE)
+#7
+m_interaction <- lm(heart.disease ~ biking * smoking,data = heart.dat)
+heart_predict_interaction <- predict(m_interaction,newdata)
+cor_val2_interaction <- cor(heart_predict_interaction,heart.dat$heart.disease)
+print(paste("考虑互作关系：",cor_val2_interaction,"，",
+            "不考虑：",cor_val2))
+#没有提高，说明biking和smoking的互作关系对heart.disease没有影响。
+#如果有提高，则说明该互作关系有统计学意义，两者间的关系会影响最终结果
+```
+
+------------------------------------------------------------------------
+
+### **`glm` 相关问题**
+
+用 `glm` 建模时使用`family=binomial`；在预测时， `type=`参数可取值 `link`（默认）和 `response`。请问，两者的区别是什么？请**写代码**举例说明。
+
+答：type参数在预测时用于选择输出的类型。link是默认选项，返回的是线性预测的值； response返回的是估计的概率，即反映了因变量为1的概率
+
+```{r}
+#family=binomial表示变量是二进制分布的
+example_data <- data.frame(response = sample(c(0,1),100,replace = TRUE),
+                           predictor1 = rnorm(100),
+                           predictor2 = rnorm(100))
+example_m <- glm(response ~ predictor1 + predictor2,family = binomial,
+                 data = example_data)
+example_new_data <- data.frame(predictor1 = rnorm(10),
+                               predictor2 = rnorm(10))
+#以example_new_data为输入，用example_m模型预测response
+predict(example_m,newdata = example_new_data,
+        type = "link")
+predict(example_m,newdata = example_new_data,
+        type = "response")
+```
+
+## 练习与作业2：non-linear regression
+
+------------------------------------------------------------------------
+
+### **分析 `swiss` ，用其它列的数据预测`Fertility`**
+
+1.  使用`earth`包建模，并做 10 times 10-fold cross validation;
+2.  使用`lm`方法建模，同样做 10 times 10-fold cross validation;
+3.  用 `RMSE` 和 `R2` 两个指标比较两种方法，挑选出较好一个；
+4.  用 `vip` 包的函数查看两种方法中 feature 的重要性，并画图（如下图所示）：
+
+![](images/talk11-feature-importance.png)
+
+```{r}
+library(earth)
+library(caret)
+set.seed(123)
+ctrl <- trainControl(method = "repeatedcv",number = 10,repeats = 10)
+#1
+earth_model <- train(Fertility ~ .,
+                 data = swiss,
+                 method = "earth",
+                 metric = "RMSE",
+                 trControl = ctrl)
+#2
+lm_model <- train(Fertility ~ .,
+                 data = swiss,
+                 method = "lm",
+                 metric = "RMSE",
+                 trControl = ctrl)
+#3
+summary(resamples(list(Earth = earth_model,LM = lm_model)))
+#RMSE越小、Rsquared越趋近于1表示模型的预测越准确
+#观察summary结果，lm模型的RMSE均值较小，Rsquared均值更接近1，因此lm方法更好
+#4
+library(vip)
+p1 <- vip(earth_model,geom = "point", value = "gcv")+ 
+  ggtitle("MARS:GCV")
+p2 <- vip(lm_model,geom = "point", value = "gcv")+ 
+  ggtitle("LM:GCV")
+library(gridExtra)
+gridExtra::grid.arrange(p2, p1, ncol = 2)
+```
